@@ -1,90 +1,103 @@
 // src/data/seedData.js
 
+// --- FIXED EMPLOYEE LIST ---
 export const initialEmployees = [
   {
-    id: 'emp_1',
-    name: 'Alice Wonderland',
-    position: 'Software Engineer',
-    department: 'Technology',
-    email: 'alice@example.com', // Using email for login
-    phone: '123-456-7890',
-    startDate: '2023-01-15',
+    id: 'emp_fixed_1',
+    name: 'Alice Fixed',
+    position: 'Senior Developer',
+    department: 'Engineering',
+    email: 'alice.fixed@example.com',
+    phone: '111-222-3333',
+    startDate: '2022-01-10',
   },
   {
-    id: 'emp_2',
-    name: 'Bob The Builder',
-    position: 'Project Manager',
-    department: 'Construction',
-    email: 'bob@example.com', // Using email for login
-    phone: '987-654-3210',
-    startDate: '2022-11-20',
+    id: 'emp_fixed_2',
+    name: 'Bob Static',
+    position: 'Lead QA',
+    department: 'Quality Assurance',
+    email: 'bob.static@example.com',
+    phone: '444-555-6666',
+    startDate: '2021-06-15',
   },
   {
-    id: 'emp_3',
-    name: 'Carol Danvers',
-    position: 'HR Specialist',
-    department: 'Human Resources',
-    email: 'carol@example.com', // Using email for login
-    phone: '555-123-4567',
-    startDate: '2024-03-01',
-  }
+    id: 'emp_fixed_3',
+    name: 'Carol Immutable',
+    position: 'UI/UX Designer',
+    department: 'Design',
+    email: 'carol.immutable@example.com',
+    phone: '777-888-9999',
+    startDate: '2022-09-01',
+  },
 ];
 
-// initialTasks remains the same, ensure assignedTo uses the employee IDs like 'emp_1'
-
+// --- INITIAL TASKS (for seeding localStorage if empty) ---
+// Ensure 'assignedTo' uses IDs from 'initialEmployees'
 export const initialTasks = [
   {
-    id: 'task_1',
-    title: 'Develop login page',
-    description: 'Create the UI and basic logic for the login page.',
-    assignedTo: 'emp_1',
-    dueDate: '2025-06-10',
+    id: 'task_ls_1',
+    title: 'Finalize UI for Employee Directory',
+    description: 'Review and confirm the UI for the static employee list.',
+    assignedTo: 'emp_fixed_3', // Carol Immutable
+    dueDate: '2025-07-15',
     status: 'To Do',
     priority: 'High',
   },
   {
-    id: 'task_2',
-    title: 'Client Meeting Prep',
-    description: 'Prepare presentation slides for the upcoming client meeting.',
-    assignedTo: 'emp_2',
-    dueDate: '2025-06-05',
+    id: 'task_ls_2',
+    title: 'Test Task Management with LocalStorage',
+    description: 'Verify all CRUD operations for tasks using LocalStorage.',
+    assignedTo: 'emp_fixed_2', // Bob Static
+    dueDate: '2025-07-20',
     status: 'In Progress',
     priority: 'Medium',
   },
+  {
+    id: 'task_ls_3',
+    title: 'Document LocalStorage Data Structure',
+    description: 'Write down the structure for tasks and users in LocalStorage.',
+    assignedTo: 'emp_fixed_1', // Alice Fixed
+    dueDate: '2025-07-25',
+    status: 'To Do',
+    priority: 'Low',
+  },
 ];
 
-
-// Updated Predefined Users with email and (simulated) password
+// --- PREDEFINED USERS FOR LOGIN (Sole source for login credentials) ---
+// This also defines the link between a loginable user and their fixed employee profile.
 export const predefinedUsers = [
   {
-    id: 'user_admin',
-    email: 'admin@example.com', // Changed username to email
-    password: 'adminpassword', // Simulated password
+    id: 'user_admin_main', // Unique ID for this user entry
+    email: 'admin@example.com', // Admin email
+    password: 'adminpassword',   // Plaintext, for simulation only!
     role: 'admin',
-    name: 'Admin User',
+    name: 'Admin User (System)', // Name for display
+    employeeId: null, // Admin might not have a corresponding entry in initialEmployees
   },
   {
-    id: 'user_alice',
-    email: 'alice@example.com', // Email matches employee record
-    password: 'password123',  // Simulated password
+    id: 'user_alice_login',
+    email: 'alice.fixed@example.com',   // Must match an email in initialEmployees
+    password: 'passwordalice',          // Plaintext, for simulation
     role: 'employee',
-    employeeId: 'emp_1',
-    name: 'Alice Wonderland', // Name can match employee name
+    employeeId: 'emp_fixed_1',          // Must match an ID in initialEmployees
+    name: 'Alice Fixed',                // Should match name in initialEmployees for consistency
   },
   {
-    id: 'user_bob',
-    email: 'bob@example.com',
-    password: 'password456',
+    id: 'user_bob_login',
+    email: 'bob.static@example.com',    // Match an email in initialEmployees
+    password: 'passwordbob',
     role: 'employee',
-    employeeId: 'emp_2',
-    name: 'Bob The Builder',
+    employeeId: 'emp_fixed_2',          // Match an ID in initialEmployees
+    name: 'Bob Static',
   },
   {
-    id: 'user_carol',
-    email: 'carol@example.com',
-    password: 'password789',
+    id: 'user_carol_login',
+    email: 'carol.immutable@example.com', // Match an email in initialEmployees
+    password: 'passwordcarol',
     role: 'employee',
-    employeeId: 'emp_3',
-    name: 'Carol Danvers',
+    employeeId: 'emp_fixed_3',            // Match an ID in initialEmployees
+    name: 'Carol Immutable',
   }
 ];
+
+// Note: DEFAULT_COMMON_PASSWORD is no longer needed as admins don't create new employees/users.

@@ -1,24 +1,24 @@
 // src/pages/EmployeeListPage.jsx
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { getAllEmployees, deleteEmployee } from '../services/storageService';
-import { initialEmployees } from '../data/seedData';
+import React, { useState, useEffect, useCallback } from 'react';
+// import { Link } from 'react-router-dom'; // Link not needed if no actions
+import { getAllEmployees } from '../services/storageService'; // LS service using seedData
 
 const EmployeeListPage = () => {
   const [employees, setEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
+  // isLoading can be for a refresh button, not critical for initial LS load
+  const [isLoading, setIsLoading] = useState(false); 
 
-  useEffect(() => {
-    const loadedEmployees = getAllEmployees(initialEmployees);
+  const loadEmployees = useCallback(() => {
+    setIsLoading(true);
+    const loadedEmployees = getAllEmployees(); // Directly from seedData via service
     setEmployees(loadedEmployees);
+    setIsLoading(false);
   }, []);
 
-  const handleDelete = (id) => {
-    if (window.confirm('Are you sure you want to delete this employee?')) {
-      deleteEmployee(id);
-      setEmployees(getAllEmployees());
-    }
-  };
+  useEffect(() => {
+    loadEmployees();
+  }, [loadEmployees]);
 
   const filteredEmployees = employees.filter(employee =>
     (employee.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -29,13 +29,17 @@ const EmployeeListPage = () => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-gray-700">Manage Employees</h2>
-        <Link to="/admin/employees/add">
-          <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-            Add New Employee
-          </button>
-        </Link>
+        <h2 className="text-2xl font-semibold text-gray-700">Employee Directory (Fixed List)</h2>
+        <button 
+            onClick={loadEmployees} 
+            disabled={isLoading}
+            className="bg-green-500 hover:bg-green-600 text-white text-sm py-2 px-3 rounded disabled:opacity-50"
+        >
+            {isLoading ? 'Refreshing...' : 'Refresh List'}
+        </button>
+        {/* "Add New Employee" button is removed */}
       </div>
+
       <div className="mb-4">
         <input
           type="text"
@@ -46,8 +50,14 @@ const EmployeeListPage = () => {
         />
       </div>
 
-      {filteredEmployees.length > 0 ? (
-        <div className="overflow-x-auto">
+      {filteredEmployees.length === 0 && (
+        <p className="text-gray-600 mt-4">
+          No employees found. {searchTerm && 'Try adjusting your search.'}
+        </p>
+      )}
+
+      {filteredEmployees.length > 0 && (
+        <div className="overflow-x-auto mt-4">
           <table className="min-w-full bg-white">
             <thead className="bg-gray-50">
               <tr>
@@ -56,7 +66,8 @@ const EmployeeListPage = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Department</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Start Date</th>
+                {/* Actions column removed as there are no add/edit/delete actions */}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -67,21 +78,13 @@ const EmployeeListPage = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.department}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.phone}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <Link to={`/admin/employees/edit/${employee.id}`} className="text-indigo-600 hover:text-indigo-900 mr-3">
-                      Edit
-                    </Link>
-                    <button onClick={() => handleDelete(employee.id)} className="text-red-600 hover:text-red-900">
-                      Delete
-                    </button>
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.startDate}</td>
+                  {/* Edit/Delete buttons and ID column removed */}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-      ) : (
-        <p className="text-gray-600 mt-4">No employees found. {searchTerm && 'Try adjusting your search.'}</p>
       )}
     </div>
   );

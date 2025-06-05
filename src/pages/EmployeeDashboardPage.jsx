@@ -1,11 +1,10 @@
 // src/pages/EmployeeDashboardPage.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
-import { getAllTasks } from '../services/storageService';
-import { initialTasks } from '../data/seedData'; // For initial seeding
+import { useAuth } from '../contexts/AuthContext'; // LS-based AuthContext
+import { getAllTasks } from '../services/storageService'; // LS service
 
-// Reusable StatCard component (can be moved to a common components folder later)
+// StatCard component (can be a common component)
 const StatCard = ({ title, value, linkTo, bgColor = 'bg-blue-500', textColor = 'text-white', linkText = "View Details" }) => (
   <div className={`p-6 rounded-lg shadow-lg ${bgColor} ${textColor}`}>
     <h3 className="text-xl font-semibold">{title}</h3>
@@ -27,11 +26,12 @@ const EmployeeDashboardPage = () => {
     tasksCompleted: 0,
     tasksInReview: 0,
   });
-  const [loading, setLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // For refresh button
 
-  useEffect(() => {
+  const loadStats = useCallback(() => {
+    setIsLoading(true);
     if (currentUser && currentUser.role === 'employee' && currentUser.employeeId) {
-      const allSystemTasks = getAllTasks(initialTasks); // Ensure tasks are seeded
+      const allSystemTasks = getAllTasks(); // Sync LS call
       const employeeTasks = allSystemTasks.filter(task => task.assignedTo === currentUser.employeeId);
 
       const tasksToDo = employeeTasks.filter(task => task.status?.toLowerCase() === 'to do').length;
@@ -47,31 +47,43 @@ const EmployeeDashboardPage = () => {
         tasksInReview,
       });
     }
-    setLoading(false);
+    setIsLoading(false);
   }, [currentUser]);
 
-  if (loading) {
-    return <p className="text-center text-gray-600 mt-10">Loading dashboard data...</p>;
-  }
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]); // Re-run if currentUser changes or loadStats changes (it won't due to useCallback)
 
   if (!currentUser || currentUser.role !== 'employee') {
-    // Should be handled by ProtectedRoute, but as a fallback
-    return <p className="text-center text-red-500 mt-10">Access Denied.</p>;
+    return (
+      <div className="bg-white p-6 rounded-lg shadow-md mt-10">
+        <p className="text-gray-600 text-center">Please log in as an employee to view this dashboard.</p>
+      </div>
+    );
   }
 
   return (
     <div>
-      <h1 className="text-3xl font-semibold text-gray-800 mb-8">My Dashboard</h1>
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-3xl font-semibold text-gray-800">My Dashboard (LocalStorage)</h1>
+         <button 
+            onClick={loadStats} 
+            disabled={isLoading}
+            className="bg-indigo-500 hover:bg-indigo-600 text-white text-sm py-2 px-3 rounded disabled:opacity-50"
+        >
+            {isLoading ? 'Refreshing...' : 'Refresh Stats'}
+        </button>
+      </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <StatCard
-          title="Total Assigned Tasks"
+          title="My Total Assigned Tasks"
           value={stats.totalAssignedTasks}
-          linkTo="/employee/tasks"
+          linkTo="/employee/tasks" // Link to the detailed task list
           bgColor="bg-purple-500"
-          linkText="View My Tasks"
+          linkText="View My Tasks List"
         />
-        {/* You can add more summary cards relevant to the employee */}
       </div>
 
       <div className="mb-8 bg-white p-6 rounded-lg shadow-md">
@@ -84,7 +96,6 @@ const EmployeeDashboardPage = () => {
         </div>
       </div>
 
-      {/* Quick link to full task list */}
       <div className="bg-white p-6 rounded-lg shadow-md">
         <h2 className="text-2xl font-semibold text-gray-700 mb-4">Quick Access</h2>
         <Link to="/employee/tasks">

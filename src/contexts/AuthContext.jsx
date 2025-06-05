@@ -1,162 +1,84 @@
-// // src/contexts/AuthContext.jsx
-// import React, { createContext, useState, useEffect, useContext } from 'react';
-// import { getMockUser, setMockUser as storeUser, clearMockUser as removeUser } from '../services/storageService';
-// import { predefinedUsers } from '../data/seedData'; // For login simulation
-
-// const AuthContext = createContext(null);
-
-// // export const AuthProvider = ({ children }) => {
-// //   const [currentUser, setCurrentUser] = useState(getMockUser()); // Initialize from localStorage
-
-// //   const login = (userIdToLogin) => {
-// //     const user = predefinedUsers.find(u => u.id === userIdToLogin);
-// //     if (user) {
-// //       storeUser(user); // Save to localStorage
-// //       setCurrentUser(user); // Update state
-// //       return user; // Return user object on successful login
-// //     }
-// //     return null; // Return null if login fails
-// //   };
-
-// //   const logout = () => {
-// //     removeUser(); // Clear from localStorage
-// //     setCurrentUser(null); // Update state
-// //   };
-
-// //   // Optional: useEffect to listen to storage changes from other tabs (advanced)
-// //   // useEffect(() => {
-// //   //   const handleStorageChange = (event) => {
-// //   //     if (event.key === 'currentUser') {
-// //   //       setCurrentUser(getMockUser());
-// //   //     }
-// //   //   };
-// //   //   window.addEventListener('storage', handleStorageChange);
-// //   //   return () => {
-// //   //     window.removeEventListener('storage', handleStorageChange);
-// //   //   };
-// //   // }, []);
-
-// //   return (
-// //     <AuthContext.Provider value={{ currentUser, login, logout }}>
-// //       {children}
-// //     </AuthContext.Provider>
-// //   );
-// // };
-
-// // Custom hook to use the auth context
-// // export const useAuth = () => {
-// //   return useContext(AuthContext);
-// // };
-
-// // src/contexts/AuthContext.jsx
-// // ...
-// export const AuthProvider = ({ children }) => {
-//   const [currentUser, setCurrentUser] = useState(getMockUser());
-
-//   const login = (userIdToLogin) => { // Expects the ID of the user
-//     const user = predefinedUsers.find(u => u.id === userIdToLogin);
-//     if (user) {
-//       storeUser(user); // Save to localStorage
-//       setCurrentUser(user); // Update state
-//       return user;
-//     }
-//     return null;
-//   };
-//   // ... logout and provider ...
-
-//   const logout = () => {
-//     removeUser(); // Clear from localStorage
-//     setCurrentUser(null); // Update state
-//   };
-
-//   // Optional: useEffect to listen to storage changes from other tabs (advanced)
-//   // useEffect(() => {
-//   //   const handleStorageChange = (event) => {
-//   //     if (event.key === 'currentUser') {
-//   //       setCurrentUser(getMockUser());
-//   //     }
-//   //   };
-//   //   window.addEventListener('storage', handleStorageChange);
-//   //   return () => {
-//   //     window.removeEventListener('storage', handleStorageChange);
-//   //   };
-//   // }, []);
-
-//   return (
-//     <AuthContext.Provider value={{ currentUser, login, logout }}>
-//       {children}
-//     </AuthContext.Provider>
-//   );
-// };
-
-// export const useAuth = () => {
-//   return useContext(AuthContext);
-// };
-
-
 // src/contexts/AuthContext.jsx
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
-import { 
-    getMockUser, 
-    setMockUser as storeUserInLocalStorage, // Renamed for clarity
-    clearMockUser as removeUserFromLocalStorage, // Renamed for clarity
-    getAllDynamicUsers 
+import {
+    setCurrentUser as storeUserInLocalStorage,
+    getCurrentUser as getUserFromLocalStorage,
+    getAllLoginableUsers, // Gets users from seedData.predefinedUsers
+    getEmployeeById // To fetch full employee details for the logged-in user
 } from '../services/storageService';
-import { predefinedUsers } from '../data/seedData';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState(getMockUser());
-  const [combinedUserList, setCombinedUserList] = useState([]);
+  // Initialize currentUser state from what's stored in localStorage
+  const [currentUser, setCurrentUserInternal] = useState(() => getUserFromLocalStorage());
 
-  // Function to load and combine all users (predefined + dynamic)
-  const loadAndCombineUsers = useCallback(() => {
-    const dynamicUsers = getAllDynamicUsers();
-    const combined = [...predefinedUsers, ...dynamicUsers];
-    setCombinedUserList(combined);
-    return combined; // Return for immediate use if needed
-  }, []); // Empty dependency array, this structure is stable
+  // Wrapper for setCurrentUser to also update localStorage
+  const setCurrentUserAndUpdateStorage = useCallback((userData) => {
+    storeUserInLocalStorage(userData); // This handles null to remove from storage
+    setCurrentUserInternal(userData);
+  }, []);
 
-  useEffect(() => {
-    loadAndCombineUsers();
-    // This effect runs once on mount.
-    // If dynamic users change, we need a way to trigger a reload of this list.
-    // For this app's scope, a page reload or re-login after adding/deleting an employee
-    // will refresh the dynamic user list from localStorage.
-  }, [loadAndCombineUsers]);
-
-  const login = (userIdToLogin) => {
-    // Ensure combinedUserList is up-to-date, especially if login is called before useEffect runs fully
-    // or if dynamic users could have changed without a component remount.
-    const currentCombinedUsers = (combinedUserList.length > 0) ? combinedUserList : loadAndCombineUsers();
+  const login = useCallback((email, password) => {
+    const allLoginableSeedUsers = getAllLoginableUsers(); // From seedData.predefinedUsers
     
-    const user = currentCombinedUsers.find(u => u.id === userIdToLogin);
-    
-    if (user) {
-      storeUserInLocalStorage(user);
-      setCurrentUser(user);
-      return user;
+    const foundSeedUser = allLoginableSeedUsers.find(
+      (user) => user.email.toLowerCase() === email.toLowerCase() && user.password === password
+    );
+
+    if (foundSeedUser) {
+      let employeeDetails = null;
+      // If the logged-in user is an employee and has an employeeId, fetch their full static profile
+      if (foundSeedUser.role === 'employee' && foundSeedUser.employeeId) {
+        employeeDetails = getEmployeeById(foundSeedUser.employeeId); // Fetches from seedData.initialEmployees
+      }
+
+      const userToStore = {
+        uid: foundSeedUser.id, // The ID from the predefinedUsers entry
+        email: foundSeedUser.email,
+        // Use name from the detailed employee profile if available, otherwise from the seedUser entry
+        name: employeeDetails ? employeeDetails.name : foundSeedUser.name,
+        role: foundSeedUser.role,
+        employeeId: foundSeedUser.employeeId || null, // The ID linking to initialEmployees
+        // You could add more details from employeeDetails here if needed throughout the app
+        // e.g., position: employeeDetails ? employeeDetails.position : null
+      };
+      
+      setCurrentUserAndUpdateStorage(userToStore);
+      return userToStore; // Return the constructed user object
+    } else {
+      // If login fails, ensure both context state and localStorage are cleared
+      setCurrentUserAndUpdateStorage(null);
+      return null; // Indicate login failure
     }
-    
-    console.warn("AuthContext: User not found with ID during login:", userIdToLogin);
-    return null;
+  }, [setCurrentUserAndUpdateStorage]);
+
+  const logout = useCallback(() => {
+    setCurrentUserAndUpdateStorage(null); // Clears context state and localStorage
+  }, [setCurrentUserAndUpdateStorage]);
+
+  // On initial load, ensure the state is definitely synced with localStorage.
+  // This is mostly redundant if useState initializer works correctly, but adds robustness.
+  useEffect(() => {
+    const storedUser = getUserFromLocalStorage();
+    if (storedUser) {
+      // Potentially re-verify/re-construct user object if needed,
+      // but for LS, just setting it should be fine.
+      // This ensures that if AuthProvider re-mounts, state is consistent.
+      setCurrentUserInternal(storedUser);
+    }
+  }, []);
+
+
+  const value = {
+    currentUser,
+    login,
+    logout,
+    // loadingAuth is not needed for synchronous localStorage operations
   };
-
-  const logout = () => {
-    removeUserFromLocalStorage();
-    setCurrentUser(null);
-  };
-
-  // A function to explicitly refresh the user list if other parts of the app modify dynamicUsers
-  // and an immediate update to AuthContext is needed without re-login.
-  const refreshAuthUserList = useCallback(() => {
-    loadAndCombineUsers();
-  }, [loadAndCombineUsers]);
-
 
   return (
-    <AuthContext.Provider value={{ currentUser, login, logout, refreshAuthUserList }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

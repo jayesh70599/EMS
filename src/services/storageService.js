@@ -1,262 +1,123 @@
-// // src/services/storageService.js
-
-// const EMPLOYEES_KEY = 'employees';
-// const TASKS_KEY = 'tasks';
-// const USER_KEY = 'currentUser'; // For storing the mock logged-in user
-
-// // --- Generic Helper Functions ---
-// const getFromStorage = (key) => {
-//   const item = localStorage.getItem(key);
-//   return item ? JSON.parse(item) : null;
-// };
-
-// const saveToStorage = (key, data) => {
-//   localStorage.setItem(key, JSON.stringify(data));
-// };
-
-// // --- User Simulation ---
-// export const getMockUser = () => {
-//   const item = localStorage.getItem(USER_KEY);
-//   return item ? JSON.parse(item) : null; // Return null if no user is logged in
-// };
-
-// export const setMockUser = (user) => {
-//   saveToStorage(USER_KEY, user);
-// };
-
-// export const clearMockUser = () => {
-//   localStorage.removeItem(USER_KEY);
-// };
-
-
-// // --- Employee Specific Functions ---
-// export const getAllEmployees = (initialData = []) => {
-//   let employees = getFromStorage(EMPLOYEES_KEY);
-//   if (!employees || employees.length === 0) {
-//     employees = initialData; // Seed with initial data if empty
-//     saveToStorage(EMPLOYEES_KEY, employees);
-//   }
-//   return employees;
-// };
-
-// export const getEmployeeById = (id) => {
-//   const employees = getAllEmployees();
-//   return employees.find(emp => emp.id === id) || null;
-// };
-
-// export const addEmployee = (employee) => {
-//   const employees = getAllEmployees();
-//   const newEmployee = { ...employee, id: 'emp_' + new Date().getTime() + Math.random().toString(16).slice(2) };
-//   const updatedEmployees = [...employees, newEmployee];
-//   saveToStorage(EMPLOYEES_KEY, updatedEmployees);
-//   return newEmployee;
-// };
-
-// export const updateEmployee = (updatedEmployee) => {
-//   let employees = getAllEmployees();
-//   employees = employees.map(emp =>
-//     emp.id === updatedEmployee.id ? { ...emp, ...updatedEmployee } : emp
-//   );
-//   saveToStorage(EMPLOYEES_KEY, employees);
-//   return updatedEmployee;
-// };
-
-// export const deleteEmployee = (id) => {
-//   let employees = getAllEmployees();
-//   employees = employees.filter(emp => emp.id !== id);
-//   saveToStorage(EMPLOYEES_KEY, employees);
-//   return id; // Return the id of the deleted employee
-// };
-
-// // --- Task Specific Functions (You can add these similarly) ---
-// export const getAllTasks = (initialData = []) => {
-//    let tasks = getFromStorage(TASKS_KEY);
-//   if (!tasks || tasks.length === 0 && initialData.length > 0) { // Only seed if initialData is provided and tasks are empty
-//     tasks = initialData;
-//     saveToStorage(TASKS_KEY, tasks);
-//   } else if (!tasks) {
-//     tasks = []; // Ensure tasks is an array if localStorage is empty and no initialData
-//   }
-//   return tasks;
-// };
-
-// export const getTaskById = (id) => { // <-- New Function
-//   const tasks = getAllTasks();
-//   return tasks.find(task => task.id === id) || null;
-// };
-
-// export const addTask = (task) => {
-//   const tasks = getAllTasks();
-//   const newTask = { ...task, id: 'task_' + new Date().getTime() + Math.random().toString(16).slice(2) };
-//   const updatedTasks = [...tasks, newTask];
-//   saveToStorage(TASKS_KEY, updatedTasks);
-//   return newTask;
-// };
-
-// export const updateTask = (updatedTask) => {
-//   let tasks = getAllTasks();
-//   tasks = tasks.map(t =>
-//     t.id === updatedTask.id ? { ...t, ...updatedTask } : t
-//   );
-//   saveToStorage(TASKS_KEY, tasks);
-//   return updatedTask;
-// };
-
-// export const deleteTask = (id) => {
-//   let tasks = getAllTasks();
-//   tasks = tasks.filter(task => task.id !== id);
-//   saveToStorage(TASKS_KEY, tasks);
-//   return id;
-// };
-
-
 // src/services/storageService.js
+import { initialEmployees, initialTasks, predefinedUsers as seedPredefinedUsers } from '../data/seedData';
 
-const EMPLOYEES_KEY = 'employees';
-const TASKS_KEY = 'tasks';
-const USER_KEY = 'currentUser'; // For storing the mock logged-in user
-const DYNAMIC_USERS_KEY = 'dynamicAppUsers'; // Key for dynamically created users
+// --- LocalStorage Keys ---
+const TASKS_KEY = 'react_ems_tasks_ls'; // Suffix '_ls' to avoid collision if old keys exist
+const CURRENT_USER_KEY = 'react_ems_currentUser_ls';
 
-// --- Generic Helper Functions ---
+// --- Generic LocalStorage Helper Functions ---
 const getFromStorage = (key) => {
   const item = localStorage.getItem(key);
   try {
-    return item ? JSON.parse(item) : null;
+    // If item is null or undefined, JSON.parse will throw error or return null.
+    // If item is an empty string, it's not valid JSON.
+    if (item === null || item === undefined || item === "") {
+      return null;
+    }
+    return JSON.parse(item);
   } catch (e) {
     console.error("Error parsing JSON from localStorage for key:", key, e);
-    return null; // Return null or an appropriate default if parsing fails
+    // localStorage.removeItem(key); // Optional: remove corrupted item
+    return null; // Return null if parsing fails or item is invalid
   }
 };
 
 const saveToStorage = (key, data) => {
-  localStorage.setItem(key, JSON.stringify(data));
-};
-
-// --- User Simulation (currentUser - for session) ---
-export const getMockUser = () => {
-  return getFromStorage(USER_KEY);
-};
-
-export const setMockUser = (user) => {
-  saveToStorage(USER_KEY, user);
-};
-
-export const clearMockUser = () => {
-  localStorage.removeItem(USER_KEY);
-};
-
-// --- Dynamic User Management (for new employees who need to log in) ---
-export const getAllDynamicUsers = (initialData = []) => {
-  let users = getFromStorage(DYNAMIC_USERS_KEY);
-  // Ensure users is an array, seed if empty and initialData is provided
-  if (!Array.isArray(users)) {
-    users = Array.isArray(initialData) && initialData.length > 0 ? initialData : [];
-    saveToStorage(DYNAMIC_USERS_KEY, users);
-  } else if (users.length === 0 && Array.isArray(initialData) && initialData.length > 0) {
-    users = initialData;
-    saveToStorage(DYNAMIC_USERS_KEY, users);
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+  } catch (e) {
+    console.error("Error saving to localStorage for key:", key, e);
   }
-  return users;
 };
 
-export const addDynamicUser = (userData) => {
-  const users = getAllDynamicUsers();
-  // UserData should include: id, email, password, role, name, employeeId
-  const newUser = { ...userData };
-  const updatedUsers = [...users, newUser];
-  saveToStorage(DYNAMIC_USERS_KEY, updatedUsers);
-  return newUser;
-};
-
-// --- Employee Specific Functions ---
-export const getAllEmployees = (initialData = []) => {
-  let employees = getFromStorage(EMPLOYEES_KEY);
-  if (!Array.isArray(employees)) {
-    employees = Array.isArray(initialData) && initialData.length > 0 ? initialData : [];
-    saveToStorage(EMPLOYEES_KEY, employees);
-  } else if (employees.length === 0 && Array.isArray(initialData) && initialData.length > 0) {
-    employees = initialData;
-    saveToStorage(EMPLOYEES_KEY, employees);
-  }
-  return employees;
+// --- Employee Management (Read-only from seedData.js) ---
+export const getAllEmployees = () => {
+  // Always return a fresh copy of the fixed list from seedData
+  return [...initialEmployees];
 };
 
 export const getEmployeeById = (id) => {
-  const employees = getAllEmployees();
-  return employees.find(emp => emp.id === id) || null;
+  // Find from the fixed list in seedData
+  return initialEmployees.find(emp => emp.id === id) || null;
 };
 
-export const addEmployee = (employeeData) => {
-  const employees = getAllEmployees();
-  const newEmployeeId = 'emp_' + new Date().getTime() + Math.random().toString(36).substring(2, 10);
-  const newEmployee = { ...employeeData, id: newEmployeeId };
-  const updatedEmployees = [...employees, newEmployee];
-  saveToStorage(EMPLOYEES_KEY, updatedEmployees);
-  return newEmployee; // Return the full new employee object with its ID
-};
+// Functions for adding, updating, or deleting employees are removed
+// as the employee list is now static and sourced from seedData.js.
 
-export const updateEmployee = (updatedEmployee) => {
-  let employees = getAllEmployees();
-  employees = employees.map(emp =>
-    emp.id === updatedEmployee.id ? { ...emp, ...updatedEmployee } : emp
-  );
-  saveToStorage(EMPLOYEES_KEY, employees);
-  return updatedEmployee;
-};
-
-export const deleteEmployee = (employeeIdToDelete) => {
-  let employees = getAllEmployees();
-  employees = employees.filter(emp => emp.id !== employeeIdToDelete);
-  saveToStorage(EMPLOYEES_KEY, employees);
-
-  // Also delete the associated dynamic user
-  let dynamicUsers = getAllDynamicUsers();
-  dynamicUsers = dynamicUsers.filter(user => user.employeeId !== employeeIdToDelete);
-  saveToStorage(DYNAMIC_USERS_KEY, dynamicUsers);
-
-  return employeeIdToDelete;
-};
-
-
-// --- Task Specific Functions ---
-export const getAllTasks = (initialData = []) => {
+// --- Task Management (Uses localStorage) ---
+export const getAllTasks = () => {
   let tasks = getFromStorage(TASKS_KEY);
-   if (!Array.isArray(tasks)) {
-    tasks = Array.isArray(initialData) && initialData.length > 0 ? initialData : [];
-    saveToStorage(TASKS_KEY, tasks);
-  } else if (tasks.length === 0 && Array.isArray(initialData) && initialData.length > 0) {
-    tasks = initialData;
+  // If localStorage is empty or not an array, seed it with initialTasks
+  if (!Array.isArray(tasks)) {
+    tasks = [...initialTasks]; // Use a copy of initialTasks for seeding
     saveToStorage(TASKS_KEY, tasks);
   }
   return tasks;
 };
 
 export const getTaskById = (id) => {
-  const tasks = getAllTasks();
+  const tasks = getAllTasks(); // Ensures tasks are loaded/seeded if necessary
   return tasks.find(task => task.id === id) || null;
 };
 
 export const addTask = (taskData) => {
-  const tasks = getAllTasks();
-  const newTaskId = 'task_' + new Date().getTime() + Math.random().toString(36).substring(2, 10);
-  const newTask = { ...taskData, id: newTaskId };
+  const tasks = getAllTasks(); // Ensures tasks are loaded/seeded
+  const newTask = {
+    ...taskData,
+    // Generate a unique ID for the new task
+    id: 'task_ls_' + new Date().getTime() + Math.random().toString(36).substring(2, 9),
+  };
   const updatedTasks = [...tasks, newTask];
   saveToStorage(TASKS_KEY, updatedTasks);
-  return newTask;
+  return newTask; // Return the newly created task with its ID
 };
 
-export const updateTask = (updatedTask) => {
-  let tasks = getAllTasks();
-  tasks = tasks.map(t =>
-    t.id === updatedTask.id ? { ...t, ...updatedTask } : t
-  );
-  saveToStorage(TASKS_KEY, tasks);
-  return updatedTask;
+export const updateTask = (taskId, updatedData) => {
+  let tasks = getAllTasks(); // Ensures tasks are loaded/seeded
+  const taskIndex = tasks.findIndex(task => task.id === taskId);
+  if (taskIndex > -1) {
+    // Ensure the ID is not changed by updatedData and merge other fields
+    tasks[taskIndex] = { ...tasks[taskIndex], ...updatedData, id: taskId };
+    saveToStorage(TASKS_KEY, tasks);
+    return tasks[taskIndex]; // Return the updated task
+  }
+  console.warn(`Task with ID ${taskId} not found for update.`);
+  return null; // Or throw an error
 };
 
-export const deleteTask = (taskIdToDelete) => {
-  let tasks = getAllTasks();
-  tasks = tasks.filter(task => task.id !== taskIdToDelete);
-  saveToStorage(TASKS_KEY, tasks);
-  return taskIdToDelete;
+export const deleteTask = (taskId) => {
+  let tasks = getAllTasks(); // Ensures tasks are loaded/seeded
+  const initialLength = tasks.length;
+  tasks = tasks.filter(task => task.id !== taskId);
+  if (tasks.length < initialLength) {
+    saveToStorage(TASKS_KEY, tasks);
+    return true; // Indicate success
+  }
+  console.warn(`Task with ID ${taskId} not found for deletion.`);
+  return false; // Indicate failure or task not found
 };
+
+// --- Simulated User Session Management (Uses localStorage) ---
+export const getCurrentUser = () => {
+  return getFromStorage(CURRENT_USER_KEY);
+};
+
+export const setCurrentUser = (userData) => {
+  if (userData) {
+    saveToStorage(CURRENT_USER_KEY, userData);
+  } else {
+    // If userData is null or undefined, remove the item from localStorage
+    localStorage.removeItem(CURRENT_USER_KEY);
+  }
+};
+
+// --- Loginable Users (Read-only from seedData.js) ---
+export const getAllLoginableUsers = () => {
+  // Returns users defined in seedData.js for login purposes.
+  // No dynamic user creation as admins cannot add employees.
+  return [...seedPredefinedUsers];
+};
+
+// Dynamic user functions (addDynamicUser, getAllDynamicUsers) are removed
+// as they were tied to the feature of admins adding new employees who could then log in.
+// With a fixed employee list and predefined users, these are no longer needed.
