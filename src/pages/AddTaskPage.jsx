@@ -14,23 +14,14 @@ const AddTaskPage = () => {
     priority: 'Medium', // Default priority
   });
   const [employees, setEmployees] = useState([]);
-  const [isLoading, setIsLoading] = useState(false); // For button states during submission
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Load static employees for the dropdown
-  const loadEmployees = useCallback(() => {
-    const loadedEmployees = getAllEmployees(); // Synchronous call, gets from seedData
-    setEmployees(loadedEmployees);
-    // Optionally set a default assignee if the list is not empty
-    // if (loadedEmployees.length > 0 && !task.assignedTo) {
-    //   setTask(prevTask => ({ ...prevTask, assignedTo: loadedEmployees[0].id }));
-    // }
-  }, []); // No dependencies needed as getAllEmployees is stable for static data
 
   useEffect(() => {
-    loadEmployees();
-  }, [loadEmployees]);
+   const loadedEmployees = getAllEmployees(); 
+    setEmployees(loadedEmployees);
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -44,25 +35,21 @@ const AddTaskPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    setError('');
-    setSuccessMessage('');
-    setIsLoading(true);
 
     if (!task.title || !task.assignedTo) {
       setError('Task Title and Assigned Employee are required.');
-      setIsLoading(false);
       return;
     }
 
-    const addedTask = addTask(task); // Synchronous LS call from storageService
+    const addedTask = addTask(task); // Synchronous LS call
 
-    if (addedTask && addedTask.id) {
+    if (addedTask) {
       setSuccessMessage(`Task "${addedTask.title}" added successfully with ID: ${addedTask.id}.`);
       // Reset form, perhaps keeping the selected assignee or clearing it
       setTask({
         title: '',
         description: '',
-        assignedTo: employees.length > 0 ? '' : '', // Clear or default assignee
+        assignedTo: '', // Clear or default assignee
         dueDate: '',
         status: 'To Do',
         priority: 'Medium'
@@ -72,7 +59,7 @@ const AddTaskPage = () => {
     } else {
       setError('Failed to add task. An unexpected error occurred.');
     }
-    setIsLoading(false);
+
   };
 
   const inputClass = "mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm disabled:bg-gray-50";
@@ -88,17 +75,17 @@ const AddTaskPage = () => {
         </Link>
       </div>
 
-      {error && !successMessage && <p className="text-red-600 bg-red-100 p-3 rounded-md text-sm mb-4">{error}</p>}
+      {error && <p className="text-red-600 bg-red-100 p-3 rounded-md text-sm mb-4">{error}</p>}
       {successMessage && <p className="text-green-700 bg-green-100 p-3 rounded-md text-sm mb-4">{successMessage}</p>}
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <label htmlFor="title" className={labelClass}>Title:</label>
-          <input type="text" id="title" name="title" value={task.title} onChange={handleChange} className={inputClass} required disabled={isLoading} />
+          <input type="text" id="title" name="title" value={task.title} onChange={handleChange} className={inputClass} required />
         </div>
         <div>
           <label htmlFor="description" className={labelClass}>Description:</label>
-          <textarea id="description" name="description" value={task.description} onChange={handleChange} rows="3" className={inputClass} disabled={isLoading}></textarea>
+          <textarea id="description" name="description" value={task.description} onChange={handleChange} rows="3" className={inputClass} ></textarea>
         </div>
         <div>
           <label htmlFor="assignedTo" className={labelClass}>Assign To:</label>
@@ -109,7 +96,6 @@ const AddTaskPage = () => {
             onChange={handleChange}
             className={selectClass}
             required
-            disabled={isLoading || employees.length === 0}
           >
             <option value="">-- Select Employee --</option>
             {employees.map(emp => (
@@ -122,11 +108,11 @@ const AddTaskPage = () => {
         </div>
         <div>
           <label htmlFor="dueDate" className={labelClass}>Due Date:</label>
-          <input type="date" id="dueDate" name="dueDate" value={task.dueDate} onChange={handleChange} className={inputClass} disabled={isLoading} />
+          <input type="date" id="dueDate" name="dueDate" value={task.dueDate} onChange={handleChange} className={inputClass} />
         </div>
         <div>
           <label htmlFor="status" className={labelClass}>Status:</label>
-          <select id="status" name="status" value={task.status} onChange={handleChange} className={selectClass} disabled={isLoading}>
+          <select id="status" name="status" value={task.status} onChange={handleChange} className={selectClass} >
             <option value="To Do">To Do</option>
             <option value="In Progress">In Progress</option>
             <option value="Review">Review</option>
@@ -135,22 +121,22 @@ const AddTaskPage = () => {
         </div>
         <div>
           <label htmlFor="priority" className={labelClass}>Priority:</label>
-          <select id="priority" name="priority" value={task.priority} onChange={handleChange} className={selectClass} disabled={isLoading}>
+          <select id="priority" name="priority" value={task.priority} onChange={handleChange} className={selectClass}>
             <option value="Low">Low</option>
             <option value="Medium">Medium</option>
             <option value="High">High</option>
           </select>
         </div>
         <div className="flex items-center justify-end space-x-3 pt-2">
-          <Link to="/admin/tasks" className={`px-4 py-2 rounded-md text-sm font-medium border border-gray-300 hover:bg-gray-50 ${isLoading ? 'opacity-50 cursor-not-allowed' : 'text-gray-700'}`}>
+          <Link to="/admin/tasks" className={`px-4 py-2 rounded-md text-sm font-medium border border-gray-300 hover:bg-gray-50 text-gray-700`}>
             Cancel
           </Link>
           <button
             type="submit"
             className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
-            disabled={isLoading || (employees.length === 0 && !error) || (!!successMessage && !error)}
           >
-            {isLoading ? 'Adding Task...' : 'Add Task'}
+   
+            Add Task
           </button>
         </div>
       </form>

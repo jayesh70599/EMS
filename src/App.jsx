@@ -5,7 +5,7 @@ import { useAuth } from './contexts/AuthContext'; // LS-based AuthContext
 import ProtectedRoute from './components/auth/ProtectedRoute'; // This should still work
 
 // Pages
-import HomePage from './pages/HomePage';
+//import HomePage from './pages/HomePage';
 import EmployeeListPage from './pages/EmployeeListPage';
 // AddEmployeePage and EditEmployeePage are removed as employees are static
 import TaskListPage from './pages/TaskListPage';
@@ -22,11 +22,11 @@ import EmployeeDashboardPage from './pages/EmployeeDashboardPage';
 const RootRedirector = () => {
   const { currentUser } = useAuth();
 
-  if (!currentUser) {
-    // This should ideally be caught by ProtectedRoute already,
-    // but as a fallback if someone reaches here without currentUser.
-    return <Navigate to="/login" replace />;
-  }
+  // if (!currentUser) {
+  //   // This should ideally be caught by ProtectedRoute already,
+  //   // but as a fallback if someone reaches here without currentUser.
+  //   return <Navigate to="/login" replace />;
+  // }
 
   return currentUser.role === 'admin'
     ? <Navigate to="/admin/dashboard" replace />
@@ -108,7 +108,13 @@ function App() {
             {/* Signup route is removed */}
 
             {/* Protected Routes - Common */}
-            <Route path="/" element={
+            {/* <Route path="/" element={
+              <ProtectedRoute>
+                <RootRedirector />
+              </ProtectedRoute>
+            }/> */}
+
+             <Route path="/" element={
               <ProtectedRoute>
                 <RootRedirector />
               </ProtectedRoute>

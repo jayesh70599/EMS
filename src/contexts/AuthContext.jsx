@@ -3,8 +3,8 @@ import React, { createContext, useState, useEffect, useContext, useCallback } fr
 import {
     setCurrentUser as storeUserInLocalStorage,
     getCurrentUser as getUserFromLocalStorage,
-    getAllLoginableUsers, // Gets users from seedData.predefinedUsers
-    getEmployeeById // To fetch full employee details for the logged-in user
+    getAllLoginableUsers,
+    getEmployeeById 
 } from '../services/storageService';
 
 const AuthContext = createContext(null);
@@ -40,8 +40,6 @@ export const AuthProvider = ({ children }) => {
         name: employeeDetails ? employeeDetails.name : foundSeedUser.name,
         role: foundSeedUser.role,
         employeeId: foundSeedUser.employeeId || null, // The ID linking to initialEmployees
-        // You could add more details from employeeDetails here if needed throughout the app
-        // e.g., position: employeeDetails ? employeeDetails.position : null
       };
       
       setCurrentUserAndUpdateStorage(userToStore);
@@ -57,14 +55,10 @@ export const AuthProvider = ({ children }) => {
     setCurrentUserAndUpdateStorage(null); // Clears context state and localStorage
   }, [setCurrentUserAndUpdateStorage]);
 
-  // On initial load, ensure the state is definitely synced with localStorage.
-  // This is mostly redundant if useState initializer works correctly, but adds robustness.
+  
   useEffect(() => {
     const storedUser = getUserFromLocalStorage();
-    if (storedUser) {
-      // Potentially re-verify/re-construct user object if needed,
-      // but for LS, just setting it should be fine.
-      // This ensures that if AuthProvider re-mounts, state is consistent.
+    if (storedUser) {    
       setCurrentUserInternal(storedUser);
     }
   }, []);

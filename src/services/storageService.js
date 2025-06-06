@@ -65,7 +65,7 @@ export const addTask = (taskData) => {
   const newTask = {
     ...taskData,
     // Generate a unique ID for the new task
-    id: 'task_ls_' + new Date().getTime() + Math.random().toString(36).substring(2, 9),
+    id: 'task' + new Date().getTime() + Math.random().toString(36).substring(2, 9),
   };
   const updatedTasks = [...tasks, newTask];
   saveToStorage(TASKS_KEY, updatedTasks);

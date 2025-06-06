@@ -30,7 +30,6 @@ const AdminDashboardPage = () => {
 
   const loadDashboardStats = useCallback(() => {
     setIsLoading(true);
-    // Data fetching is synchronous from localStorage
     const employees = getAllEmployees(); // Gets from seedData via service
     const tasks = getAllTasks(); // Gets from localStorage, seeds if empty
 
@@ -48,16 +47,16 @@ const AdminDashboardPage = () => {
       tasksInReview,
     });
     setIsLoading(false);
-  }, []);
+  }, [])
 
   useEffect(() => {
     loadDashboardStats();
-  }, [loadDashboardStats]);
+  }, [loadDashboardStats]); // No dependencies needed as getAllEmployees is stable for static data
 
   return (
     <div>
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-semibold text-gray-800">Admin Dashboard (LocalStorage)</h1>
+        <h1 className="text-3xl font-semibold text-gray-800">Admin Dashboard</h1>
         <button 
             onClick={loadDashboardStats} 
             disabled={isLoading}

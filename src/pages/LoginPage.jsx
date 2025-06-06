@@ -12,16 +12,6 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false); // For button state
 
-  // Redirect if user is already logged in
-  useEffect(() => {
-    if (currentUser) {
-      if (currentUser.role === 'admin') {
-        navigate('/admin/dashboard', { replace: true });
-      } else {
-        navigate('/employee/dashboard', { replace: true });
-      }
-    }
-  }, [currentUser, navigate]);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -50,7 +40,7 @@ const LoginPage = () => {
 
   return (
     <div className="max-w-md mx-auto mt-10 bg-white p-8 rounded-lg shadow-md">
-      <h2 className="text-2xl font-semibold text-center text-gray-700 mb-6">Login (LocalStorage Mode)</h2>
+      <h2 className="text-2xl font-semibold text-center text-gray-700 mb-6">Login</h2>
       <form onSubmit={handleLogin} className="space-y-6">
         <div>
           <label htmlFor="email" className={labelClass}>Email Address:</label>

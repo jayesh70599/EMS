@@ -48,19 +48,12 @@ const EmployeeDashboardPage = () => {
       });
     }
     setIsLoading(false);
-  }, [currentUser]);
+  }, []);
 
   useEffect(() => {
     loadStats();
   }, [loadStats]); // Re-run if currentUser changes or loadStats changes (it won't due to useCallback)
 
-  if (!currentUser || currentUser.role !== 'employee') {
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-md mt-10">
-        <p className="text-gray-600 text-center">Please log in as an employee to view this dashboard.</p>
-      </div>
-    );
-  }
 
   return (
     <div>

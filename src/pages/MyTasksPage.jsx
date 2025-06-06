@@ -9,7 +9,7 @@ const MyTasksPage = () => {
   const [error, setError] = useState(null);
   // isLoading can be used for a general refresh button, not critical for initial LS load
   const [isLoading, setIsLoading] = useState(false); 
-  const [updatingTaskId, setUpdatingTaskId] = useState(null); // To show loading on specific task status update
+  
 
   const loadMyTasks = useCallback(() => {
     setIsLoading(true); // Indicate activity, e.g., for refresh button
@@ -31,7 +31,7 @@ const MyTasksPage = () => {
   const handleStatusChange = (taskId, newStatus) => {
     const taskToUpdate = myTasks.find(task => task.id === taskId);
     if (taskToUpdate) {
-      setUpdatingTaskId(taskId); // Indicate which task is being updated
+    
       setError(null);
       
       // The data to update in localStorage. updateTask expects the full updated object.
@@ -47,10 +47,7 @@ const MyTasksPage = () => {
         );
       } else {
         setError("Failed to update task status. Please try again or refresh.");
-        // If update failed, the local state might be out of sync with LS.
-        // A full reload via loadMyTasks() could be an option here too.
       }
-      setUpdatingTaskId(null);
     }
   };
 
@@ -73,21 +70,6 @@ const MyTasksPage = () => {
       default: return 'bg-gray-100 text-gray-500';
     }
   };
-
-  if (!currentUser || currentUser.role !== 'employee') {
-    // This should ideally be handled by ProtectedRoute, but good as a fallback.
-    return (
-      <div className="bg-white p-6 rounded-lg shadow-md mt-10">
-        <p className="text-gray-600 text-center">Please log in as an employee to view your tasks.</p>
-      </div>
-    );
-  }
-  
-  // Initial loading state (though LS is fast, good for consistency if there was a brief calculation)
-  // if (isLoading && myTasks.length === 0 && !error) { // Check error to avoid showing loading on error
-  //    return <p className="text-center text-gray-600 mt-10 p-4">Loading your tasks...</p>;
-  // }
-
 
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
@@ -137,7 +119,6 @@ const MyTasksPage = () => {
                     <select
                       value={task.status}
                       onChange={(e) => handleStatusChange(task.id, e.target.value)}
-                      disabled={updatingTaskId === task.id} // Disable while this specific task is updating
                       className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md disabled:opacity-70"
                     >
                       <option value="To Do">To Do</option>
@@ -145,7 +126,7 @@ const MyTasksPage = () => {
                       <option value="Review">Review</option>
                       <option value="Completed">Completed</option>
                     </select>
-                    {updatingTaskId === task.id && <p className="text-xs text-blue-500 mt-1">Updating...</p>}
+                  
                   </td>
                 </tr>
               ))}

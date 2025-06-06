@@ -7,18 +7,12 @@ const EmployeeListPage = () => {
   const [employees, setEmployees] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   // isLoading can be for a refresh button, not critical for initial LS load
-  const [isLoading, setIsLoading] = useState(false); 
 
-  const loadEmployees = useCallback(() => {
-    setIsLoading(true);
-    const loadedEmployees = getAllEmployees(); // Directly from seedData via service
-    setEmployees(loadedEmployees);
-    setIsLoading(false);
-  }, []);
 
   useEffect(() => {
-    loadEmployees();
-  }, [loadEmployees]);
+    const loadedEmployees = getAllEmployees(); 
+    setEmployees(loadedEmployees);
+  }, []);
 
   const filteredEmployees = employees.filter(employee =>
     (employee.name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -29,15 +23,7 @@ const EmployeeListPage = () => {
   return (
     <div className="bg-white p-6 rounded-lg shadow-md">
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-semibold text-gray-700">Employee Directory (Fixed List)</h2>
-        <button 
-            onClick={loadEmployees} 
-            disabled={isLoading}
-            className="bg-green-500 hover:bg-green-600 text-white text-sm py-2 px-3 rounded disabled:opacity-50"
-        >
-            {isLoading ? 'Refreshing...' : 'Refresh List'}
-        </button>
-        {/* "Add New Employee" button is removed */}
+        <h2 className="text-2xl font-semibold text-gray-700">Employee Directory </h2>
       </div>
 
       <div className="mb-4">
@@ -79,7 +65,6 @@ const EmployeeListPage = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.email}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.phone}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{employee.startDate}</td>
-                  {/* Edit/Delete buttons and ID column removed */}
                 </tr>
               ))}
             </tbody>
